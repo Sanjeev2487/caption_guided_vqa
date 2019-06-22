@@ -1,0 +1,24 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import json
+import numpy as np
+
+import time
+import os
+from six.moves import cPickle
+
+
+
+import opts
+import models
+import eval_utils
+import argparse
+from misc.utils import *
+import torch
+
+opt = opts.parse_opt()
+# Setup the model
+model_path = 'saved_models/2018_11_10_10_10_06_668082/caption_model.pth'
+eval_utils.eval_split(model_path, opt)

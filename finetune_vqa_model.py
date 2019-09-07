@@ -114,6 +114,7 @@ def train(opt):
     lr1 = opt.lr1
     lr2 = opt.lr2
     decay_rate = [lr1, lr1, lr1, lr1, lr1, lr1, lr1, lr2, 1, 1, 1, 1, 1, 1, 1, 1]
+    model.load_state_dict(torch.load("vqa_models/vqa_model-best.pth"))
 
     for params_idx in range(len(vqa_optim.param_groups)):
         param_group = vqa_optim.param_groups[params_idx]

@@ -196,13 +196,13 @@ def train(opt):
             nn.utils.clip_grad_norm(model.parameters(), 0.25)
             caption_optim.step()
                 
-            if  (i+1) % (100)  == 0:
+            if (i+1) % (100) == 0:
                 print('LOSS: ', losses, file=log_file)
                 captions = evaluate_caption(model, eval_loader, caption_dictionary.idx2word, step = 10)
                 print(captions)
                 log_file.flush()
             i += 1
-            if  i % (2000)  == 0:
+            if i % (2000) == 0:
                 torch.save(model.state_dict(), opt.checkpoint_path + '/caption_%d_%d_model.pth'%(epoch, i))
 
         torch.save(model.state_dict(), opt.checkpoint_path + '/caption_model.pth')

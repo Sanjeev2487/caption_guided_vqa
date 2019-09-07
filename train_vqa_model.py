@@ -111,13 +111,7 @@ def train(opt):
     log_file.flush()
     max_eval_score = 0
     dp_model = nn.DataParallel(model)
-    lr1 = opt.lr1
-    lr2 = opt.lr2
-    if opt.train_mode == 1:
-        decay_rate = [1] * 16
-    elif opt.train_mode == 2:
-        decay_rate = [lr1, lr1, lr1, lr1, lr1, lr1, lr1, lr2, 1, 1, 1, 1, 1, 1, 1, 1]
-        model.load_state_dict(torch.load('saved_models/2019_09_05_10_29_36_604312/vqa_model-best.pth'))
+    decay_rate = [1] * 16
 
     for params_idx in range(len(vqa_optim.param_groups)):
         param_group = vqa_optim.param_groups[params_idx]
@@ -156,10 +150,7 @@ def train(opt):
                 log_file.flush()
                 torch.save(model.state_dict(), opt.checkpoint_path + '/vqa_model.pth')
                 if eval_score > max_eval_score:
-                    if opt.train_mode == 1:
-                        torch.save(model.state_dict(), opt.checkpoint_path + '/vqa_model-best.pth')
-                    else:
-                        torch.save(model.state_dict(), opt.checkpoint_path + '/vqa_model-best.pth')
+                    torch.save(model.state_dict(), 'vqa_models/vqa_model-best.pth')
                     max_eval_score = eval_score
 
 

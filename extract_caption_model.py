@@ -143,8 +143,8 @@ def train(opt):
     model.load_state_dict( torch.load("saved_models/2019_06_19_21_22_34_887913/caption_%d_6000_model.pth"%epoch))
 
     qid2caption_train = evaluate_caption(model, train_loader, caption_dictionary.idx2word, step = 1000000000)
+    cPickle.dump(qid2caption_train, open('data/qid2caption_bs_%d_train.pkl' % epoch, 'wb'))
     qid2caption_val = evaluate_caption(model, eval_loader, caption_dictionary.idx2word, step = 1000000000)
-    cPickle.dump(qid2caption_train, open('data/qid2caption_bs_%d_train.pkl'%epoch, 'wb'))
     cPickle.dump(qid2caption_val, open('data/qid2caption_bs_%d_val.pkl'%epoch, 'wb'))
 
 

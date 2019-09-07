@@ -95,7 +95,7 @@ class CaptionQAIMGDataset(Dataset):
         self.entriess  = cPickle.load(open(dataroot + '/VQA_caption_'+name+'dataset.pkl', 'rb'))
         count = 0
         self.entries = {}
-        if caption_dir != 'None':
+        if 'None' not in caption_dir:
             qid2captions = cPickle.load(open(caption_dir))
         else:
             qid2captions = {}
@@ -105,7 +105,7 @@ class CaptionQAIMGDataset(Dataset):
                         'question' : self.entriess[i]['question'][k]['question'], 'answer' :  self.entriess[i]['answer'][k] }
                 self.entries[count] = new_entry
                 self.entries[count]['uid'] = count
-                if caption_dir == 'None':
+                if 'None' in caption_dir:
                     for j in xrange(5):
                         self.entries[count]['caption'].append(self.entriess[i]['caption'][j])
                 else:

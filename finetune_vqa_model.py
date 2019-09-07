@@ -85,7 +85,7 @@ def train(opt):
 
     # Assure in training mode
     model.train()
-    vqa_optim = torch.optim.Adamax([{'params': model.w_emb.parameters()},
+    vqa_optim = torch.optim.Adam([{'params': model.w_emb.parameters()},
                                     {'params': model.q_emb.parameters()},
                                     {'params': model.classifier2.parameters()},
                                     {'params': model.v_att_1.parameters()},
@@ -113,11 +113,17 @@ def train(opt):
     dp_model = nn.DataParallel(model)
     lr1 = opt.lr1
     lr2 = opt.lr2
+    decay_rate = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
     if opt.train_mode == 1:
         decay_rate = [1] * 16
+        model.load_state_dict(torch.load("vqa_model-best.pth"))
     elif opt.train_mode == 2:
         decay_rate = [lr1, lr1, lr1, lr1, lr1, lr1, lr1, lr2, 1, 1, 1, 1, 1, 1, 1, 1]
-        model.load_state_dict(torch.load('saved_models/2019_09_05_10_29_36_604312/vqa_model-best.pth'))
+        model.load_state_dict(torch.load('saved_models/2019_09_06_10_20_40_513532/vqa_model-best.pth'))
+    elif opt.train_mode == 3:
+        decay_rate = [lr1, lr1, lr1, lr1, lr1, lr1, lr1, lr2, 1, 1, 1, 1, 1, 1, 1, 1]
+        model.load_state_dict(torch.load('vqa_model-best.pth'))
+
 
     for params_idx in range(len(vqa_optim.param_groups)):
         param_group = vqa_optim.param_groups[params_idx]
@@ -127,6 +133,19 @@ def train(opt):
     for epoch in xrange(opt.train_vqa_epochs):
         i = 0
         losses = 0.0
+        if opt.train_mode == 3:
+            if epoch < 2:
+                decay_rate = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
+                for params_idx in range(len(vqa_optim.param_groups)):
+                    param_group = vqa_optim.param_groups[params_idx]
+                    print('CURRENT_LR: ', param_group['lr'], file=log_file)
+                    param_group['lr'] *= decay_rate[params_idx]
+            else:
+                decay_rate = [lr1, lr1, lr1, lr1, lr1, lr1, lr1, lr2, 1, 1, 1, 1, 1, 1, 1, 1]
+                for params_idx in range(len(vqa_optim.param_groups)):
+                    param_group = vqa_optim.param_groups[params_idx]
+                    print('CURRENT_LR: ', param_group['lr'], file=log_file)
+                    param_group['lr'] = decay_rate[params_idx] * opt.learning_rate
 
         for v, q, a, c, rc, vm, _ in tqdm(iter(train_loader)):
             vqa_optim.zero_grad()
@@ -136,10 +155,10 @@ def train(opt):
             c = c.long().cuda()
             rc = rc.long().cuda()
             pred, pred1, pred2 = dp_model(v, q, c, rc, 1, 'VQA')
-            loss0 = instance_bce_with_logits(pred, a) # joint
-            loss1 = instance_bce_with_logits(pred1, a) # caption
-            loss2 = instance_bce_with_logits(pred2, a) # visual
-            loss = loss0 * opt.joint_weight + loss1 * opt.caption_weight + loss2* opt.visual_weight
+            loss0 = instance_bce_with_logits(pred, a)
+            loss1 = instance_bce_with_logits(pred1, a)
+            loss2 = instance_bce_with_logits(pred2, a)
+            loss = loss0 * opt.joint_weight + loss1 * opt.caption_weight + loss2 * opt.visual_weight
             loss.backward()
             losses += loss.item()
             nn.utils.clip_grad_norm(model.parameters(), 0.25)
@@ -149,15 +168,14 @@ def train(opt):
                 print('LOSS: ', loss.item(), file=log_file)
                 log_file.flush()
             i += 1
-            if i % 350 == 0:
+            if i % 350 == 1:
                 eval_score, eval_score1, eval_score2 = evaluate(dp_model, eval_loader, 1)
                 print('VALIDATION: current_score', eval_score, 'best_val_score ', max_eval_score,\
                     'current_score1', eval_score1, 'current_score2 ', eval_score2, file=log_file)
                 log_file.flush()
-                torch.save(model.state_dict(), opt.checkpoint_path + '/vqa_model.pth')
                 if eval_score > max_eval_score:
                     if opt.train_mode == 1:
-                        torch.save(model.state_dict(), opt.checkpoint_path + '/vqa_model-best.pth')
+                        torch.save(model.state_dict(),  opt.checkpoint_path + '/vqa_model-best.pth')
                     else:
                         torch.save(model.state_dict(), opt.checkpoint_path + '/vqa_model-best.pth')
                     max_eval_score = eval_score

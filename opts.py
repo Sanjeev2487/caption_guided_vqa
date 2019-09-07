@@ -141,6 +141,17 @@ def parse_opt():
     parser.add_argument('--epoch', type=int, default=9,
                         help='The reward weight from bleu4')
 
+    parser.add_argument('--joint_weight', type=float, default=0.,
+                        help='The reward weight from cider')
+    parser.add_argument('--caption_weight', type=float, default=0.,
+                        help='The reward weight from bleu4')
+    parser.add_argument('--visual_weight', type=float, default=0.,
+                        help='The reward weight from bleu4')
+    parser.add_argument('--lr1', type=float, default=0.25,
+                        help='The reward weight from bleu4')
+    parser.add_argument('--lr2', type=float, default=0.25,
+                        help='The reward weight from bleu4')
+
     args = parser.parse_args()
 
     # Check if args are valid

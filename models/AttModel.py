@@ -107,16 +107,16 @@ class TopDownModel(CaptionModel):
                                                    dropout=0.2, rnn_type='GRU')
         self.c_net = FCNet([640, 1280], dropout=0.1, norm='weight', act='ReLU')
 
-        self.v_att_1 = Att_3(self.att_feat_size, 1280, 1280, 'weight', 'ReLU', dropout=0.2)
-        self.v_att_2 = Att_3(self.att_feat_size, 1280, 1280, 'weight', 'ReLU', dropout=0.2)
-        self.c_att_1 = Att_3(self.att_feat_size, 640, 1280, 'weight', 'ReLU', dropout=0.2)
-        self.c_att_2 = Att_3(self.att_feat_size, 640, 1280, 'weight', 'ReLU', dropout=0.2)
+        self.v_att_1 = Att_3(self.att_feat_size, 1280, 1280, 'weight', 'LeakyReLU', dropout=0.2)
+        self.v_att_2 = Att_3(self.att_feat_size, 1280, 1280, 'weight', 'LeakyReLU', dropout=0.2)
+        self.c_att_1 = Att_3(self.att_feat_size, 640, 1280, 'weight', 'LeakyReLU', dropout=0.2)
+        self.c_att_2 = Att_3(self.att_feat_size, 640, 1280, 'weight', 'LeakyReLU', dropout=0.2)
 
-        self.q_net = FCNet([1280, 1280], dropout= 0.1, norm= 'weight', act= 'ReLU')
-        self.v_net = FCNet([self.att_feat_size, 1280], dropout= 0.1, norm= 'weight', act= 'ReLU')
-        self.classifier = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'ReLU')
-        self.classifier1 = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'ReLU')
-        self.classifier2 = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'ReLU')
+        self.q_net = FCNet([1280, 1280], dropout= 0.1, norm= 'weight', act= 'LeakyReLU')
+        self.v_net = FCNet([self.att_feat_size, 1280], dropout= 0.1, norm= 'weight', act= 'LeakyReLU')
+        self.classifier = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'LeakyReLU')
+        self.classifier1 = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'LeakyReLU')
+        self.classifier2 = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'LeakyReLU')
         
     def init_hidden(self, bsz):
         weight = next(self.parameters())

@@ -1,4 +1,5 @@
 import argparse
+import pprint
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -168,4 +169,5 @@ def parse_opt():
     assert args.load_best_score == 0 or args.load_best_score == 1, "language_eval should be 0 or 1"
     assert args.train_only == 0 or args.train_only == 1, "language_eval should be 0 or 1"
 
+    pprint.pprint(args)
     return args

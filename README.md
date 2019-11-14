@@ -1,4 +1,7 @@
-# Codes for ACL 2019 paper (oral) Generating Question Relevant Captions to Aid VQA
+# Caption Guided Visual Question Answering
+
+## Base Code Taken from [here](https://github.com/jialinwu17/generate_captions_for_vqa)
+## Codes for ACL 2019 paper (oral) Generating Question Relevant Captions to Aid VQA
 ## Pre-requirements
 Pytorch >= 0.4.1 <br>
 tqdm

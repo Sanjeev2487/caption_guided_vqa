@@ -145,6 +145,7 @@ def train(opt):
 
     model.load_state_dict( torch.load("vqa_models/vqa_model-best.pth"))
 
+    count = 0
     for epoch in xrange(opt.pretrain_caption):
         i = 0
         if update_lr_flag:
@@ -161,7 +162,8 @@ def train(opt):
                 opt.ss_prob = min(opt.scheduled_sampling_increase_prob  * frac, opt.scheduled_sampling_max_prob)
                 model.ss_prob = opt.ss_prob
             update_lr_flag = False
-                
+        count += 1
+        print("Epoch: %d/%d" %(count, opt.pretrain_caption))
         for v, q, a, c, rc, vm,  _ in tqdm(iter(train_loader)):
             #print len(enumerate(train_loader))
             v = v.cuda()
@@ -199,7 +201,7 @@ def train(opt):
             if (i+1) % (100) == 0:
                 print('LOSS: ', losses, file=log_file)
                 captions = evaluate_caption(model, eval_loader, caption_dictionary.idx2word, step = 10)
-                print(captions)
+                #print(captions)
                 log_file.flush()
             i += 1
             if i % (2000) == 0:

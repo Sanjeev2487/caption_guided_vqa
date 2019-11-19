@@ -118,10 +118,12 @@ def train(opt):
         print('CURRENT_LR: ', param_group['lr'], file=log_file)
         param_group['lr'] *= decay_rate[params_idx]
 
+    count = 0
     for epoch in xrange(opt.train_vqa_epochs):
         i = 0
         losses = 0.0
-
+        count += 1
+        print("Epoch: %d/%d" %(count, opt.train_vqa_epochs))
         for v, q, a, c, rc, vm, _ in tqdm(iter(train_loader)):
             vqa_optim.zero_grad()
             v = v.cuda()

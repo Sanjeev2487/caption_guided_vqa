@@ -102,6 +102,8 @@ def parse_opt():
                         help='Maximum scheduled sampling prob.')
     parser.add_argument('--caption_dir', type=str, default='data/qid2caption',
                         help='Maximum scheduled sampling prob.')
+    parser.add_argument('--caption_model_path', type=str, default='saved_models/2019_11_19_18_03_47_079166/',
+                        help='Model path of caption file')
 
     parser.add_argument('--train_mode', type=int, default=1,
                         help='Maximum scheduled sampling prob.')

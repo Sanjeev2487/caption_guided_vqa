@@ -104,7 +104,7 @@ def evaluate_caption(model, dataloader, idx2word, step = 10000, beam_search = 1)
         for j in range(len(qids)):
             #qid2caption[int(qids[j])] = captions[j * 5: (j + 1) * 5]
             qid2caption[int(qids[j])] = captions[j : j + 1]
-            print(qid2caption[int(qids[j])])
+            #print(qid2caption[int(qids[j])])
         if i == step:
             break
         else:
@@ -139,8 +139,7 @@ def train(opt):
     log_file.flush()
 
     epoch = opt.epoch
-
-    model.load_state_dict( torch.load("saved_models/2019_06_19_21_22_34_887913/caption_%d_6000_model.pth"%epoch))
+    model.load_state_dict( torch.load(os.path.join(opt.caption_model_path, "caption_%d_6000_model.pth"%epoch)))
 
     qid2caption_train = evaluate_caption(model, train_loader, caption_dictionary.idx2word, step = 1000000000)
     cPickle.dump(qid2caption_train, open('data/qid2caption_bs_%d_train.pkl' % epoch, 'wb'))

@@ -68,6 +68,7 @@ class TopDownModel(CaptionModel):
         self.att_feat_size = opt.att_feat_size
         self.att_hid_size = opt.att_hid_size
         self.num_layers = 2
+        self.word_embedding_type = opt.word_embedding_type
         self.core = TopDownCore(opt)
 
         self.use_bn = getattr(opt, 'use_bn', 0)
@@ -94,15 +95,15 @@ class TopDownModel(CaptionModel):
 
         self.w_emb = WordEmbedding(self.n_tokens , emb_dim=300, dropout=0.4)
         self.q_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
-        self.w_emb.init_embedding('data/glove6b_init_300d.npy')
+        self.w_emb.init_embedding('data/glove6b_init_300d.npy', self.word_embedding_type)
 
         self.cw_emb = WordEmbedding(self.n_tokens , emb_dim=300, dropout=0.4)
         self.cq_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
-        self.cw_emb.init_embedding('data/glove6b_init_300d.npy')
+        self.cw_emb.init_embedding('data/glove6b_init_300d.npy', self.word_embedding_type)
 
 
         self.caption_w_emb = WordEmbedding(self.vocab_size, emb_dim=300, dropout=0.4)
-        self.caption_w_emb.init_embedding('data/glove6b_caption_init_300d.npy')
+        self.caption_w_emb.init_embedding('data/glove6b_caption_init_300d.npy', self.word_embedding_type)
         self.caption_emb = CaptionQuestionImageRNN(c_dim=300, num_hid=640 , q_dim = 1280,  nlayers=1, bidirect=False,
                                                    dropout=0.2, rnn_type='GRU')
         self.c_net = FCNet([640, 1280], dropout=0.1, norm='weight', act='ReLU')

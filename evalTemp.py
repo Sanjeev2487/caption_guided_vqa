@@ -102,6 +102,8 @@ parser.add_argument('--beam_size', type=int, default=1,
                     help='used when sample_max = 1, indicates number of beams in beam search. Usually 2 or 3 works well. More is not better. Set this to 1 for faster runtime but a bit worse performance.')
 
 #Optimization: for the Language Model
+parser.add_argument('--word_embedding_type', type=str, default='glove',
+                    help='Which word_embedding to use, glove|bert')
 parser.add_argument('--optim', type=str, default='adam',
                     help='what update to use? rmsprop|sgd|sgdmom|adagrad|adam')
 parser.add_argument('--learning_rate', type=float, default=2e-3,

@@ -5,7 +5,7 @@ import json
 import numpy as np
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dataset import Dictionary
-import cPickle
+import pickle as cPickle
 
 
 def create_dictionary(dataroot):

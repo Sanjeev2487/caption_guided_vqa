@@ -109,7 +109,7 @@ class CaptionDecoderRNN(nn.Module):
         log_prob = torch.zeros(batch)
 
         
-        for i in xrange(20):
+        for i in range(20):
             if i == 0:
                 cur_words_emb = v_rnn_inp
                 #[batch*5, 300]
@@ -138,20 +138,20 @@ class CaptionDecoderRNN(nn.Module):
             # [batch * 5, 31200]
             tmp_prob = log_prob.view(batch_img, beam_size, 1 ).repeat(1,1,beam_size)
             if i != 1:
-                for b in xrange(batch_img):
-                    for src in xrange(beam_size):
-                        for dst in xrange(beam_size):
+                for b in range(batch_img):
+                    for src in range(beam_size):
+                        for dst in range(beam_size):
                             cur_beam = b*beam_size + src
                             tmp_prob[b, src, dst] =  tmp_prob[b, src, dst] + dst_logprob[cur_beam, dst]
-                for b in xrange(batch_img):
+                for b in range(batch_img):
                     beam_square = tmp_prob[b, :,:].view( -1 )
                     sorted_beam_square, beam_square_idx = torch.sort(beam_square, descending = True)
-                    for s in xrange(beam_size):
+                    for s in range(beam_size):
                         idx_tmp = beam_square_idx[s]
-                        src = idx_tmp / beam_size
+                        src = idx_tmp // beam_size
                         dst = idx_tmp % beam_size
                         logprob_tmp = sorted_beam_square[s]
-                        for j in xrange(i):
+                        for j in range(i):
                             caption_[b * beam_size + s, j] = caption[b *beam_size + src, j]
                         caption_[b *beam_size + s, i] =  indices[b*beam_size + src, dst]
                         log_prob[b *beam_size + s] = logprob_tmp
@@ -163,8 +163,8 @@ class CaptionDecoderRNN(nn.Module):
                         #    log_prob[b *beam_size + s] += 7777777
             
             else:
-                for b in xrange(batch_img):
-                    for src in xrange(beam_size):
+                for b in range(batch_img):
+                    for src in range(beam_size):
                         cur_beam = b*beam_size + src
                         log_prob[cur_beam] = dst_logprob[b*beam_size , src]
                         hidden_v_[cur_beam, :] = hidden_v[b * beam_size, :]
@@ -225,7 +225,7 @@ class CaptionQuestionRNN(nn.Module):
         
         
         batch = c_emb.size(0)
-        n_c = c_emb.size(0) /  q_emb.size(0)
+        n_c = c_emb.size(0) //  q_emb.size(0)
         att_hidden = self.init_hidden(batch)
         self.rnn_att.flatten_parameters()
         self.rnn_c.flatten_parameters()
@@ -291,7 +291,7 @@ class CaptionQuestionImageRNN(nn.Module):
         # v_emb : [batch , v_dim]
         
         batch = c_emb.size(0)
-        n_c = c_emb.size(0) /  q_emb.size(0)
+        n_c = c_emb.size(0) //  q_emb.size(0)
         length = c_emb.size(1)
         att_hidden = self.init_hidden(batch)
         self.rnn_att.flatten_parameters()
@@ -365,7 +365,7 @@ class CaptionQuestionImageRNN0(nn.Module):
         # v_emb : [batch , v_dim]
         
         batch = c_emb.size(0)
-        n_c = c_emb.size(0) /  q_emb.size(0)
+        n_c = c_emb.size(0) //  q_emb.size(0)
         att_hidden = self.init_hidden(batch)
         self.rnn_att.flatten_parameters()
         self.rnn_c.flatten_parameters()
@@ -434,7 +434,7 @@ class CaptionQuestionImageRNN3(nn.Module):
         # v_emb : [batch , v_dim]
         
         batch = c_emb.size(0)
-        n_c = c_emb.size(0) /  q_emb.size(0)
+        n_c = c_emb.size(0) //  q_emb.size(0)
         att_hidden = self.init_hidden(batch)
         self.rnn_att.flatten_parameters()
         self.rnn_c.flatten_parameters()

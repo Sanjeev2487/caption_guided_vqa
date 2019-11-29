@@ -3,7 +3,8 @@ from __future__ import print_function
 import errno
 import os
 import numpy as np
-from PIL import Image
+#from PIL import Image
+import image
 import torch
 import torch.nn as nn
 

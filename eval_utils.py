@@ -99,8 +99,8 @@ def eval_split(model_path, opt):
         sents = decode_sequence(cPickle.load(open('caption_dictionary.pkl'))[1], seq)
 
 
-        for k in xrange(v.size(0)):
-            for j in xrange(1):
+        for k in range(v.size(0)):
+            for j in range(1):
                 sent = sents[k+j]
                 sent = sent.replace('<unk> is', 'it is').replace('<unk> are', 'there are').replace('<unk> ', '')
                 entry = {'caption': sent, 'question_id': qids[k]}

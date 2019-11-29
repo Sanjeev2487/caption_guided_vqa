@@ -119,7 +119,7 @@ def train(opt):
         param_group['lr'] *= decay_rate[params_idx]
 
     count = 0
-    for epoch in xrange(opt.train_vqa_epochs):
+    for epoch in range(opt.train_vqa_epochs):
         i = 0
         losses = 0.0
         count += 1

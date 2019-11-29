@@ -1,6 +1,6 @@
 import os
 import json
-import cPickle
+import pickle as cPickle
 import numpy as np
 import butd_utils as utils
 import h5py
@@ -85,7 +85,7 @@ class CaptionQAIMGDataset(Dataset):
         self.label2ans = cPickle.load(open(label2ans_path, 'rb'))
         self.num_ans_candidates = len(self.ans2label)
 
-        self.img_id2idx = cPickle.load(open(os.path.join(dataroot, name + '36_imgid2img.pkl' )))
+        self.img_id2idx = cPickle.load(open(os.path.join(dataroot, name + '36_imgid2img.pkl' ), 'rb'))
         print('loading features from h5 file')
         h5_path = os.path.join(dataroot, name + '36.hdf5')
         
@@ -99,14 +99,14 @@ class CaptionQAIMGDataset(Dataset):
             qid2captions = cPickle.load(open(caption_dir))
         else:
             qid2captions = {}
-        for i in xrange(len(self.entriess)):
-            for k in xrange(len(self.entriess[i]['question'])):
+        for i in range(len(self.entriess)):
+            for k in range(len(self.entriess[i]['question'])):
                 new_entry = {'caption': [], 'image': self.entriess[i]['image'], 'question_id' : self.entriess[i]['question'][k]['question_id'], \
                         'question' : self.entriess[i]['question'][k]['question'], 'answer' :  self.entriess[i]['answer'][k] }
                 self.entries[count] = new_entry
                 self.entries[count]['uid'] = count
                 if 'None' in caption_dir:
-                    for j in xrange(5):
+                    for j in range(5):
                         self.entries[count]['caption'].append(self.entriess[i]['caption'][j])
                 else:
                     self.entries[count]['caption'] = qid2captions[self.entries[count]['question_id']]

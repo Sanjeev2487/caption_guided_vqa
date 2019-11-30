@@ -29,6 +29,8 @@ from language_model import *
 from attention import *
 from caption_model import *
 
+from .hAttention import *
+
 
 
 from .CaptionModel import CaptionModel
@@ -56,6 +58,7 @@ class TopDownModel(CaptionModel):
     def __init__(self, opt):
         super(TopDownModel, self).__init__()
 
+        print("Inside TopDown Model Init")
         self.vocab_size = opt.vocab_size
         self.n_tokens = opt.n_tokens
         self.input_encoding_size = opt.input_encoding_size
@@ -93,11 +96,15 @@ class TopDownModel(CaptionModel):
         self.ctx2att = nn.Linear(self.rnn_size, self.att_hid_size)
 
         self.w_emb = WordEmbedding(self.n_tokens , emb_dim=300, dropout=0.4)
-        self.q_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        #self.q_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        print("Setting up q_emb")
+        self.q_emb = HierarchicalAttentionNet( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
         self.w_emb.init_embedding('data/glove6b_init_300d.npy')
 
         self.cw_emb = WordEmbedding(self.n_tokens , emb_dim=300, dropout=0.4)
-        self.cq_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        #self.cq_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        print("Setting up cq_emb")
+        self.cq_emb = HierarchicalAttentionNet( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
         self.cw_emb.init_embedding('data/glove6b_init_300d.npy')
 
 
@@ -117,6 +124,7 @@ class TopDownModel(CaptionModel):
         self.classifier = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'LeakyReLU')
         self.classifier1 = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'LeakyReLU')
         self.classifier2 = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'LeakyReLU')
+        print("Returning From TopDown Model Init")
         
     def init_hidden(self, bsz):
         weight = next(self.parameters())

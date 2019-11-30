@@ -4,98 +4,78 @@
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.autograd import Variable
+import numpy as np
+#from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 
 class AttentionLayer(nn.Module):
-    def __init__(self, hidden_size=100, bi=True):
+    def __init__(self, num_hid=100, bi=True):
         super(AttentionLayer, self).__init__()
-        self.hidden_size = (hidden_size*2 if bi else hidden_size)
-        self.linear_ = nn.Linear(self.hidden_size, self.hidden_size)
+        self.num_hid = (num_hid*2 if bi else num_hid)
+        self.linear_ = nn.Linear(self.num_hid, self.num_hid)
         self.tanh_ = nn.Tanh()
         self.softmax_ = nn.Softmax(dim=1)
 
     def forward(self, x):
-        u_context = torch.nn.Parameter(torch.FloatTensor(self.hidden_size).normal_(0, 0.01)).cuda()
+        print("x.shape: ", x.shape)
+        u_context = torch.nn.Parameter(torch.FloatTensor(self.num_hid).normal_(0, 0.01)).cuda()
         h = self.tanh_(self.linear_(x)).cuda()
-        alpha = self.softmax_(torch.mul(h, u_context).sum(dim=2, keepdim=True))  # (x_dim0, x_dim1, 1)
-        attention_output = torch.mul(x, alpha).sum(dim=1)  # (x_dim0, x_dim2)
+        sm = torch.mul(h, u_context)
+        print("sm.shape: ", sm.shape)
+        alpha = self.softmax_(sm.sum(dim=0, keepdim=True))  # (x_dim0, x_dim1, 1)
+        print("alpha.shape: ", alpha.shape)
+        attention_output = torch.mul(alpha, x).sum(dim=1)  # (x_dim0, x_dim2)
+        print("attention_output.shape: ", attention_output.shape)
         return attention_output, alpha
 
 
 class HierarchicalAttentionNet(nn.Module):
-    def __init__(self, vocab_size, hidden_size, n_classes, pre_embed=None, embed_fine_tune=True):
+    def __init__(self, in_dim, num_hid, nlayers, bidirect, dropout, rnn_type='GRU'):
         super(HierarchicalAttentionNet, self).__init__()
-        self.embed_size = hidden_size * 2
-        self.hidden_size = hidden_size
-        self.n_classes = n_classes
+        self.in_dim = in_dim
+        self.num_hid = num_hid
+        self.nlayers = nlayers
+        self.rnn_type = rnn_type
+        self.rnn = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
+        self.ndirections = 1 + int(bidirect)
+        self.word_rnn = self.rnn(in_dim, num_hid, nlayers, dropout=dropout, bidirectional=bidirect, batch_first=True)
+        self.word_att = AttentionLayer(num_hid, bidirect)
 
-        # word level
-        self.embed = nn.Embedding(vocab_size, hidden_size)
-        if pre_embed:
-            self.weight = nn.Parameter(pre_embed, requires_grad=(True if embed_fine_tune else False))
+    def init_hidden(self, batch):
+        # just to get the type of tensor
+        weight = next(self.parameters()).data
+        hid_shape = (self.nlayers * self.ndirections, batch, self.num_hid)
+        if self.rnn_type == 'LSTM':
+            return (Variable(weight.new(*hid_shape).zero_()),
+                    Variable(weight.new(*hid_shape).zero_()))
         else:
-            init.normal_(self.embed.weight, std=0.01)
-        self.word_rnn = nn.GRU(hidden_size*2, hidden_size, bidirectional=True)
-        self.word_att = AttentionLayer(hidden_size)
+            return Variable(weight.new(*hid_shape).zero_())
 
-        # sent level
-        self.sent_rnn = nn.GRU(hidden_size*2, hidden_size, bidirectional=True)
-        self.sent_att = AttentionLayer(hidden_size)
+    def forward(self, x):
+        # x: [batch, sequence, in_dim]
+        batch = x.size(0)
+        hidden = self.init_hidden(batch)
+        self.word_rnn.flatten_parameters()
+        output, hidden = self.word_rnn(x, hidden)
 
-        # fully connected
-        self.linear = nn.Linear(hidden_size*2, self.n_classes)
+        if self.ndirections == 1:
+            print("output.shape: ", output.shape)
+            print("output[:, -1].shape: ", output[:, -1].shape)
+            attn, _ = self.word_att(output[:, -1])
+            print("attn.shape: ", attn.shape)
+            return attn
 
-    def forward(self, x, sent_lengths, sent_idx, doc_lengths):
-        # x shape -> (batch, max_doc, max_sent)
-        # 'sent_lengths', 'doc_lengths' must sorted in decreasing order
-        # sent_lengths -> (batch*max_doc, )
-        # doc_lengths -> (batch, )
+        forward_ = output[:, -1, :self.num_hid]
+        backward = output[:, 0, self.num_hid:]
+        attn, _ = word
+        return self.word_att((forward_, backward), dim=1)
 
-        max_sent_len = x.shape[2]
-        max_doc_len = x.shape[1]
-
-        # word embedding
-        word_embed = self.embed(x) # (batch, max_doc, max_sent, embed_size)
-
-        # split sent_length=0 part (length must > 0 in 'pack_padded_sequence')
-        word_embed = word_embed.view(-1, max_sent_len, self.embed_size) # (batch*max_doc, max_sent, embed_size)
-        word_embed = word_embed[sent_lengths] # sort length
-        non_zero_idx = len(torch.nonzero(sent_lengths))
-        word_embed_sltd = word_embed[:non_zero_idx]
-        word_embed_remain = word_embed[non_zero_idx:]
-        sent_lengths_sltd = sent_lengths[:non_zero_idx]
-
-        # word encoding
-        word_packed_input = pack_padded_sequence(word_embed_sltd, sent_lengths_sltd.cpu().numpy(), batch_first=True)
-        word_packed_output, _ = self.word_rnn(word_packed_input)
-        word_encode, _ = pad_packed_sequence(word_packed_output, batch_first=True) # (non_zero_idx, max_sent_len, hidden_size*2)
-
-        # merge sent_length=0 part
-        if word_encode.shape[1] != word_embed.shape[1]:
-            word_encode_dim = word_encode.shape[1]
-            word_embed_remain = word_embed_remain[:, :word_encode_dim, :]
-            max_sent_len = word_encode_dim
-        word_encode = torch.cat((word_encode, word_embed_remain), 0) # (batch*max_doc, max_sent, hidden_size*2)
-
-        # unsort
-        sort_idx = torch.LongTensor([[[i]*self.embed_size]*max_sent_len for i in sent_idx.cpu().detach().numpy()])
-        unsort_word_encode = word_encode.new(*word_encode.size())
-        unsort_word_encode = unsort_word_encode.scatter_(0, sort_idx.cuda(), word_encode)
-
-        # word attention
-        sent_vector, sent_alpha = self.word_att(unsort_word_encode) # (batch*max_doc, hidden_size*2)
-
-        # sent encoding
-        sent_vector = sent_vector.view(-1, max_doc_len, self.hidden_size*2) # (batch, max_doc_len, hidden_size*2)
-        sent_packed_input = pack_padded_sequence(sent_vector, doc_lengths.cpu().numpy(), batch_first=True)
-        sent_packed_output, _ = self.sent_rnn(sent_packed_input)
-        sent_encode, _ = pad_packed_sequence(sent_packed_output, batch_first=True) # (batch, max_doc_len, hidden_size*2)
-
-        # sent attention
-        doc_vector, doc_alpha = self.sent_att(sent_encode) # (batch, hidden_size*2)
-
-        # fc, softmax
-        out = self.linear(doc_vector)
-
-        return out
+    def forward_all(self, x):
+        # x: [batch, sequence, in_dim]
+        batch = x.size(0)
+        hidden = self.init_hidden(batch)
+        self.word_rnn.flatten_parameters()
+        output, hidden = self.word_rnn(x, hidden)
+        attn, _ = self.word_att(output)
+        return attn

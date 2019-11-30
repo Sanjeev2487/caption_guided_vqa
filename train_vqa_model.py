@@ -81,9 +81,12 @@ def train(opt):
     opt.n_tokens = len(dictionary.word2idx)
     opt.seq_length = 17
     model = models.setup(opt).cuda()
+    print("Printing Model")
+    print(model)
     model.apply(weights_init_kn)
 
     # Assure in training mode
+    
     model.train()
     vqa_optim = torch.optim.Adamax([{'params': model.w_emb.parameters()},
                                     {'params': model.q_emb.parameters()},

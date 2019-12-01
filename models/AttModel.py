@@ -30,6 +30,7 @@ from attention import *
 from caption_model import *
 
 from .hAttention import *
+from functools import reduce
 
 
 
@@ -96,15 +97,24 @@ class TopDownModel(CaptionModel):
         self.ctx2att = nn.Linear(self.rnn_size, self.att_hid_size)
 
         self.w_emb = WordEmbedding(self.n_tokens , emb_dim=300, dropout=0.4)
-        #self.q_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
-        print("Setting up q_emb")
-        self.q_emb = HierarchicalAttentionNet( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        self.q_emb = None
+        if opt.model_type == 'hAttn':
+            print("Using Text Features with hAttn model")
+            self.q_emb = HierarchicalAttentionNet( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        else:
+            print("Using Text Features with Baseline model")
+            self.q_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
         self.w_emb.init_embedding('data/glove6b_init_300d.npy')
 
         self.cw_emb = WordEmbedding(self.n_tokens , emb_dim=300, dropout=0.4)
-        #self.cq_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
-        print("Setting up cq_emb")
-        self.cq_emb = HierarchicalAttentionNet( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        self.cq_emb = None
+        if opt.model_type == 'hAttn':
+            print("Using Text Features with hAttn model")
+            self.cq_emb = HierarchicalAttentionNet( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        else:
+            print("Using Text Features with Baseline model")
+            self.cq_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+
         self.cw_emb.init_embedding('data/glove6b_init_300d.npy')
 
 
@@ -167,7 +177,10 @@ class TopDownModel(CaptionModel):
             new_seqs = np.zeros((5 * batch_size, 17))
             n_wods = (seqs_cpu > 0).sum(1)
             for i in range(batch_size):
-                new_seqs[i,-n_wods[i]:] = seqs_cpu[i, :n_wods[i]]
+                try:
+                    new_seqs[i,-n_wods[i]:] = seqs_cpu[i, :n_wods[i]]
+                except ValueError:
+                    print("==============Got the shit error: ", count)
             seqs = torch.from_numpy(new_seqs).cuda()
             caption_w_emb = self.caption_w_emb(seqs.long())  # get word embeddings
 

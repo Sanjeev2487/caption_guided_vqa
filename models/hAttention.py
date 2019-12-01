@@ -7,12 +7,10 @@ import torch.nn.init as init
 from torch.autograd import Variable
 import numpy as np
 #from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-
-
 class AttentionLayer(nn.Module):
     def __init__(self, num_hid=100, bi=True):
         super(AttentionLayer, self).__init__()
-        self.num_hid = (num_hid*2 if bi else num_hid)
+        self.num_hid = num_hid
         self.linear_ = nn.Linear(self.num_hid, self.num_hid)
         self.tanh_ = nn.Tanh()
         self.softmax_ = nn.Softmax(dim=1)
@@ -22,11 +20,13 @@ class AttentionLayer(nn.Module):
         u_context = torch.nn.Parameter(torch.FloatTensor(self.num_hid).normal_(0, 0.01)).cuda()
         h = self.tanh_(self.linear_(x)).cuda()
         sm = torch.mul(h, u_context)
+        return sm, 0
         print("sm.shape: ", sm.shape)
         alpha = self.softmax_(sm.sum(dim=0, keepdim=True))  # (x_dim0, x_dim1, 1)
         print("alpha.shape: ", alpha.shape)
         attention_output = torch.mul(alpha, x).sum(dim=1)  # (x_dim0, x_dim2)
         print("attention_output.shape: ", attention_output.shape)
+        return attention_output, alpha
         return attention_output, alpha
 
 
@@ -54,10 +54,12 @@ class HierarchicalAttentionNet(nn.Module):
 
     def forward(self, x):
         # x: [batch, sequence, in_dim]
+        print("x.shap: ", x.shape)
         batch = x.size(0)
         hidden = self.init_hidden(batch)
         self.word_rnn.flatten_parameters()
         output, hidden = self.word_rnn(x, hidden)
+        print("output.shape: ", output.shape)
 
         if self.ndirections == 1:
             print("output.shape: ", output.shape)
@@ -68,8 +70,8 @@ class HierarchicalAttentionNet(nn.Module):
 
         forward_ = output[:, -1, :self.num_hid]
         backward = output[:, 0, self.num_hid:]
-        attn, _ = word
-        return self.word_att((forward_, backward), dim=1)
+        attn, _ = self.word_att((forward_, backward), dim=1)
+        return attn
 
     def forward_all(self, x):
         # x: [batch, sequence, in_dim]

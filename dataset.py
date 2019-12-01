@@ -96,7 +96,7 @@ class CaptionQAIMGDataset(Dataset):
         count = 0
         self.entries = {}
         if 'None' not in caption_dir:
-            qid2captions = cPickle.load(open(caption_dir))
+            qid2captions = cPickle.load(open(caption_dir, 'rb'))
         else:
             qid2captions = {}
         for i in range(len(self.entriess)):

@@ -33,6 +33,8 @@ def parse_opt():
                     help='number of layers in the RNN')
     parser.add_argument('--rnn_type', type=str, default='lstm',
                     help='rnn, gru, or lstm')
+    parser.add_argument('--model_type', type=str, default='baseline',
+                    help='baseline or hAttn')
     parser.add_argument('--input_encoding_size', type=int, default=512,
                     help='the encoding size of each token in the vocabulary, and the image.')
     parser.add_argument('--att_hid_size', type=int, default=512,

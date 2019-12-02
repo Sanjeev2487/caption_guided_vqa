@@ -148,7 +148,7 @@ def train(opt):
                 print('LOSS: ', loss.item(), file=log_file)
                 log_file.flush()
             i += 1
-            if i % 350 == 0:
+            if i % 2000 == 0:
                 eval_score, eval_score1, eval_score2 = evaluate(dp_model, eval_loader, 1)
                 print('VALIDATION: current_score', eval_score, 'best_val_score ', max_eval_score,\
                     'current_score1', eval_score1, 'current_score2 ', eval_score2, file=log_file)

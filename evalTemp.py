@@ -296,7 +296,7 @@ def eval_split(opt):
         '''
         with torch.no_grad():
             pred, pred1, pred2 = model(v, q, c, rc, 0, 'VQA')
-            ppred_final = (pred * opt.joint_weight + pred1 * opt.caption_weight + pred2* opt.visual_weight)/(opt.joint_weight + opt.caption_weight + opt.visual_weight)
+            pred_final = (pred * opt.joint_weight + pred1 * opt.caption_weight + pred2* opt.visual_weight)/(opt.joint_weight + opt.caption_weight + opt.visual_weight)
             batch_indices = compute_score_with_logits(pred_final, a.data)
             print("batch_score.shape: ", batch_indices.shape)
             correct += batch_indices.item()

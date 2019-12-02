@@ -176,11 +176,13 @@ class TopDownModel(CaptionModel):
             seqs_cpu = seqs.data.cpu().numpy()
             new_seqs = np.zeros((5 * batch_size, 17))
             n_wods = (seqs_cpu > 0).sum(1)
+            count = 0
             for i in range(batch_size):
                 try:
                     new_seqs[i,-n_wods[i]:] = seqs_cpu[i, :n_wods[i]]
                 except ValueError:
                     print("==============Got the shit error: ", count)
+                    count += 1
             seqs = torch.from_numpy(new_seqs).cuda()
             caption_w_emb = self.caption_w_emb(seqs.long())  # get word embeddings
 

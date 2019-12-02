@@ -16,17 +16,16 @@ class AttentionLayer(nn.Module):
         self.softmax_ = nn.Softmax(dim=1)
 
     def forward(self, x):
-        print("x.shape: ", x.shape)
+        #print("x.shape: ", x.shape)
         u_context = torch.nn.Parameter(torch.FloatTensor(self.num_hid).normal_(0, 0.01)).cuda()
         h = self.tanh_(self.linear_(x)).cuda()
         sm = torch.mul(h, u_context)
         return sm, 0
-        print("sm.shape: ", sm.shape)
+        #print("sm.shape: ", sm.shape)
         alpha = self.softmax_(sm.sum(dim=0, keepdim=True))  # (x_dim0, x_dim1, 1)
-        print("alpha.shape: ", alpha.shape)
+        #print("alpha.shape: ", alpha.shape)
         attention_output = torch.mul(alpha, x).sum(dim=1)  # (x_dim0, x_dim2)
-        print("attention_output.shape: ", attention_output.shape)
-        return attention_output, alpha
+        #print("attention_output.shape: ", attention_output.shape)
         return attention_output, alpha
 
 
@@ -54,18 +53,18 @@ class HierarchicalAttentionNet(nn.Module):
 
     def forward(self, x):
         # x: [batch, sequence, in_dim]
-        print("x.shap: ", x.shape)
+        #print("x.shap: ", x.shape)
         batch = x.size(0)
         hidden = self.init_hidden(batch)
         self.word_rnn.flatten_parameters()
         output, hidden = self.word_rnn(x, hidden)
-        print("output.shape: ", output.shape)
+        #print("output.shape: ", output.shape)
 
         if self.ndirections == 1:
-            print("output.shape: ", output.shape)
-            print("output[:, -1].shape: ", output[:, -1].shape)
+            #print("output.shape: ", output.shape)
+            #print("output[:, -1].shape: ", output[:, -1].shape)
             attn, _ = self.word_att(output[:, -1])
-            print("attn.shape: ", attn.shape)
+            #print("attn.shape: ", attn.shape)
             return attn
 
         forward_ = output[:, -1, :self.num_hid]

@@ -167,8 +167,8 @@ def train(opt):
 
                 if eval_score > max_eval_score:
                     torch.save({'epoch':epoch,
-                                'model_state_dict': model.state_dict()
-                                'opt': opt
+                                'model_state_dict': model.state_dict(),
+                                'opt': opt,
                                 'max_eval_score': max_eval_score}, 'vqa_models/vqa_model-best.pth')
                     max_eval_score = eval_score
 

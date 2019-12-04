@@ -265,7 +265,17 @@ def eval_split(opt):
     model = models.setup(opt)
 
     print("Loading model from: ", opt.model)
-    model.load_state_dict(torch.load(opt.model))
+    checkpoint = None
+    checkpoint = None
+    if opt.model and os.path.exists(opt.model):
+        checkpoint = torch.load(opt.model)
+
+    if checkpoint:
+        print("Loading models from checkpoint save earlier")
+        model.load_state_dict(checkpoint['model_state_dict'])
+    else:
+        print("No valid model provided for evaluation")
+
     model.cuda()
 
     # Make sure in the evaluation mode

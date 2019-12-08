@@ -29,6 +29,9 @@ from language_model import *
 from attention import *
 from caption_model import *
 
+from .hAttention import *
+from functools import reduce
+
 
 
 from .CaptionModel import CaptionModel
@@ -56,6 +59,7 @@ class TopDownModel(CaptionModel):
     def __init__(self, opt):
         super(TopDownModel, self).__init__()
 
+        print("Inside TopDown Model Init")
         self.vocab_size = opt.vocab_size
         self.n_tokens = opt.n_tokens
         self.input_encoding_size = opt.input_encoding_size
@@ -68,6 +72,7 @@ class TopDownModel(CaptionModel):
         self.att_feat_size = opt.att_feat_size
         self.att_hid_size = opt.att_hid_size
         self.num_layers = 2
+        self.word_embedding_type = opt.word_embedding_type
         self.core = TopDownCore(opt)
 
         self.use_bn = getattr(opt, 'use_bn', 0)
@@ -93,16 +98,29 @@ class TopDownModel(CaptionModel):
         self.ctx2att = nn.Linear(self.rnn_size, self.att_hid_size)
 
         self.w_emb = WordEmbedding(self.n_tokens , emb_dim=300, dropout=0.4)
-        self.q_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
-        self.w_emb.init_embedding('data/glove6b_init_300d.npy')
+        self.q_emb = None
+        if opt.model_type == 'hAttn':
+            print("Using Text Features with hAttn model")
+            self.q_emb = HierarchicalAttentionNet( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        else:
+            print("Using Text Features with Baseline model")
+            self.q_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        self.w_emb.init_embedding('data/glove6b_init_300d.npy', self.word_embedding_type)
 
         self.cw_emb = WordEmbedding(self.n_tokens , emb_dim=300, dropout=0.4)
-        self.cq_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
-        self.cw_emb.init_embedding('data/glove6b_init_300d.npy')
+        self.cq_emb = None
+        if opt.model_type == 'hAttn':
+            print("Using Text Features with hAttn model")
+            self.cq_emb = HierarchicalAttentionNet( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+        else:
+            print("Using Text Features with Baseline model")
+            self.cq_emb = QuestionEmbedding( 300, 1280, nlayers=1, bidirect=False, dropout=0.2, rnn_type='GRU')
+
+        self.cw_emb.init_embedding('data/glove6b_init_300d.npy', self.word_embedding_type)
 
 
         self.caption_w_emb = WordEmbedding(self.vocab_size, emb_dim=300, dropout=0.4)
-        self.caption_w_emb.init_embedding('data/glove6b_caption_init_300d.npy')
+        self.caption_w_emb.init_embedding('data/glove6b_caption_init_300d.npy', self.word_embedding_type)
         self.caption_emb = CaptionQuestionImageRNN(c_dim=300, num_hid=640 , q_dim = 1280,  nlayers=1, bidirect=False,
                                                    dropout=0.2, rnn_type='GRU')
         self.c_net = FCNet([640, 1280], dropout=0.1, norm='weight', act='ReLU')
@@ -117,6 +135,7 @@ class TopDownModel(CaptionModel):
         self.classifier = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'LeakyReLU')
         self.classifier1 = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'LeakyReLU')
         self.classifier2 = SimpleClassifier( in_dim=1280, hid_dim= 2 * 1280, out_dim=3129, dropout=0.5, norm= 'weight', act= 'LeakyReLU')
+        print("Returning From TopDown Model Init")
         
     def init_hidden(self, bsz):
         weight = next(self.parameters())
@@ -158,8 +177,13 @@ class TopDownModel(CaptionModel):
             seqs_cpu = seqs.data.cpu().numpy()
             new_seqs = np.zeros((5 * batch_size, 17))
             n_wods = (seqs_cpu > 0).sum(1)
-            for i in xrange(batch_size):
-                new_seqs[i,-n_wods[i]:] = seqs_cpu[i, :n_wods[i]]
+            count = 0
+            for i in range(batch_size):
+                try:
+                    new_seqs[i,-n_wods[i]:] = seqs_cpu[i, :n_wods[i]]
+                except ValueError:
+                    print("==============Got the shit error: ", count)
+                    count += 1
             seqs = torch.from_numpy(new_seqs).cuda()
             caption_w_emb = self.caption_w_emb(seqs.long())  # get word embeddings
 

@@ -5,7 +5,7 @@ import json
 import numpy as np
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dataset import Dictionary
-import cPickle
+import pickle as cPickle
 
 def create_dictionary(dataroot):
     dictionary = Dictionary()
@@ -16,7 +16,7 @@ def create_dictionary(dataroot):
     ]
     for path in files:
         question_path = os.path.join(dataroot, path)
-        dataset = cPickle.load(open(question_path))
+        dataset = cPickle.load(open(question_path, 'rb'))
         for idx in range(len(dataset)):
             captions = dataset[idx]['caption']
             for cap in captions:

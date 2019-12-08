@@ -81,9 +81,12 @@ def train(opt):
     opt.n_tokens = len(dictionary.word2idx)
     opt.seq_length = 17
     model = models.setup(opt).cuda()
+    print("Printing Model")
+    print(model)
     model.apply(weights_init_kn)
 
     # Assure in training mode
+    
     model.train()
     vqa_optim = torch.optim.Adamax([{'params': model.w_emb.parameters()},
                                     {'params': model.q_emb.parameters()},
@@ -110,20 +113,31 @@ def train(opt):
     print(opt, file=log_file)
     log_file.flush()
     max_eval_score = 0
-    dp_model = nn.DataParallel(model)
+    epoch = 0
     decay_rate = [1] * 16
 
+    checkpoint = None
+    if opt.train_from and os.path.exists(opt.train_from):
+        checkpoint = torch.load(opt.train_from)
+
+    if checkpoint:
+        print("Loading models from checkpoint save earlier")
+        model.load_state_dict(checkpoint['model_state_dict'])
+        epoch = checkpoint['epoch']
+        print("Val epoch:", epoch)
+        max_eval_score = checkpoint['max_eval_score']
+
+    dp_model = nn.DataParallel(model)
     for params_idx in range(len(vqa_optim.param_groups)):
         param_group = vqa_optim.param_groups[params_idx]
         print('CURRENT_LR: ', param_group['lr'], file=log_file)
         param_group['lr'] *= decay_rate[params_idx]
 
-    count = 0
-    for epoch in xrange(opt.train_vqa_epochs):
+    while epoch < opt.train_vqa_epochs:
         i = 0
         losses = 0.0
-        count += 1
-        print("Epoch: %d/%d" %(count, opt.train_vqa_epochs))
+        epoch += 1
+        print("Epoch: %d/%d" %(epoch, opt.train_vqa_epochs))
         for v, q, a, c, rc, vm, _ in tqdm(iter(train_loader)):
             vqa_optim.zero_grad()
             v = v.cuda()
@@ -145,16 +159,23 @@ def train(opt):
                 print('LOSS: ', loss.item(), file=log_file)
                 log_file.flush()
             i += 1
-            if i % 350 == 0:
+            if i % 3000 == 0:
                 eval_score, eval_score1, eval_score2 = evaluate(dp_model, eval_loader, 1)
                 print('VALIDATION: current_score', eval_score, 'best_val_score ', max_eval_score,\
                     'current_score1', eval_score1, 'current_score2 ', eval_score2, file=log_file)
                 log_file.flush()
-                torch.save(model.state_dict(), opt.checkpoint_path + '/vqa_model.pth')
+
                 if eval_score > max_eval_score:
-                    torch.save(model.state_dict(), 'vqa_models/vqa_model-best.pth')
+                    torch.save({'epoch':epoch,
+                                'model_state_dict': model.state_dict(),
+                                'opt': opt,
+                                'max_eval_score': max_eval_score}, 'vqa_models/vqa_model-best.pth')
                     max_eval_score = eval_score
 
+                torch.save({'epoch':epoch,
+                            'model_state_dict':model.state_dict(),
+                            'opt':opt,
+                             'max_eval_score':max_eval_score}, opt.checkpoint_path + '/vqa_model.pth')
 
 opt = opts.parse_opt()
 train(opt)

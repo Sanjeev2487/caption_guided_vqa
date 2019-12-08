@@ -146,7 +146,7 @@ def train(opt):
     model.load_state_dict( torch.load("vqa_models/vqa_model-best.pth"))
 
     count = 0
-    for epoch in xrange(opt.pretrain_caption):
+    for epoch in range(opt.pretrain_caption):
         i = 0
         if update_lr_flag:
             if epoch > opt.learning_rate_decay_start and opt.learning_rate_decay_start >= 0:
@@ -182,7 +182,7 @@ def train(opt):
             c = c.view(-1, c.size(-1))
             nonzeros = (c < len(caption_dictionary)).sum(1)
             masks = np.zeros(c.shape)
-            for b in xrange(c.shape[0]):
+            for b in range(c.shape[0]):
                 masks[b, :nonzeros[b] + 2] = 1
             masks = torch.from_numpy(masks).cuda().float()
 

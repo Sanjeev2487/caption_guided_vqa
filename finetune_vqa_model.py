@@ -110,18 +110,31 @@ def train(opt):
     print(opt, file=log_file)
     log_file.flush()
     max_eval_score = 0
-    dp_model = nn.DataParallel(model)
+    epoch = 0
     lr1 = opt.lr1
     lr2 = opt.lr2
     decay_rate = [lr1, lr1, lr1, lr1, lr1, lr1, lr1, lr2, 1, 1, 1, 1, 1, 1, 1, 1]
-    model.load_state_dict(torch.load("vqa_models/vqa_model-best.pth"))
 
+    checkpoint = None
+    if opt.train_from and os.path.exists(opt.train_from):
+        checkpoint = torch.load(opt.train_from)
+
+    if checkpoint:
+        print("Loading models from checkpoint save earlier")
+        model.load_state_dict(checkpoint['model_state_dict'])
+        epoch = checkpoint['epoch']
+        print("Val epoch:", epoch)
+        max_eval_score = checkpoint['max_eval_score']
+    else:
+        model.load_state_dict(torch.load("vqa_models/vqa_model-best.pth"))
+
+    dp_model = nn.DataParallel(model)
     for params_idx in range(len(vqa_optim.param_groups)):
         param_group = vqa_optim.param_groups[params_idx]
         print('CURRENT_LR: ', param_group['lr'], file=log_file)
         param_group['lr'] *= decay_rate[params_idx]
 
-    for epoch in xrange(opt.train_vqa_epochs):
+    for epoch in range(opt.train_vqa_epochs):
         i = 0
         losses = 0.0
 
@@ -146,14 +159,23 @@ def train(opt):
                 print('LOSS: ', loss.item(), file=log_file)
                 log_file.flush()
             i += 1
-            if i % 350 == 1:
+            if i % 3000 == 1:
                 eval_score, eval_score1, eval_score2 = evaluate(dp_model, eval_loader, 1)
                 print('VALIDATION: current_score', eval_score, 'best_val_score ', max_eval_score,\
                     'current_score1', eval_score1, 'current_score2 ', eval_score2, file=log_file)
                 log_file.flush()
+
                 if eval_score > max_eval_score:
-                    torch.save(model.state_dict(), opt.checkpoint_path + '/vqa_model-best.pth')
+                    torch.save({'epoch':epoch,
+                                'model_state_dict': model.state_dict(),
+                                'opt': opt,
+                                'max_eval_score': max_eval_score}, 'vqa_models/vqa_model-best.pth')
                     max_eval_score = eval_score
+
+                torch.save({'epoch':epoch,
+                            'model_state_dict':model.state_dict(),
+                            'opt':opt,
+                             'max_eval_score':max_eval_score}, opt.checkpoint_path + '/vqa_model.pth')
 
 
 opt = opts.parse_opt()

@@ -25,6 +25,8 @@ def parse_opt():
                     help='Cached token file for calculating cider score during self critical training.')
 
     # Model settings
+    parser.add_argument('--train_from', type=str, default='',
+                    help='checkpoint path to resume training from')
     parser.add_argument('--caption_model', type=str, default="topdown",
                     help='show_tell, show_attend_tell, all_img, fc, att2in, att2in2, att2all2, adaatt, adaattmo, topdown, stackatt, denseatt')
     parser.add_argument('--rnn_size', type=int, default=512,
@@ -33,6 +35,8 @@ def parse_opt():
                     help='number of layers in the RNN')
     parser.add_argument('--rnn_type', type=str, default='lstm',
                     help='rnn, gru, or lstm')
+    parser.add_argument('--model_type', type=str, default='baseline',
+                    help='baseline or hAttn')
     parser.add_argument('--input_encoding_size', type=int, default=512,
                     help='the encoding size of each token in the vocabulary, and the image.')
     parser.add_argument('--att_hid_size', type=int, default=512,
@@ -73,6 +77,8 @@ def parse_opt():
                     help='used when sample_max = 1, indicates number of beams in beam search. Usually 2 or 3 works well. More is not better. Set this to 1 for faster runtime but a bit worse performance.')
 
     #Optimization: for the Language Model
+    parser.add_argument('--word_embedding_type', type=str, default='glove',
+                    help='Which word_embedding to use, glove|bert')
     parser.add_argument('--optim', type=str, default='adam',
                     help='what update to use? rmsprop|sgd|sgdmom|adagrad|adam')
     parser.add_argument('--learning_rate', type=float, default=2e-3,

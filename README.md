@@ -1,10 +1,32 @@
 # Caption Guided Visual Question Answering
 
-## Base Code Taken from [here](https://github.com/jialinwu17/generate_captions_for_vqa)
-## Codes for ACL 2019 paper (oral) Generating Question Relevant Captions to Aid VQA
+## Authors
+* **Sanjeev Kumar Singh**
+* **Kartik Venkataraman**
+
+Results on VQA 2.0 (12/07/2019):
+
+
+<table class="tg">
+  <tr>
+    <th class="tg-0pky">Models</th>
+    <th class="tg-0pky">Paper</th>
+    <th class="tg-0pky">Baseline</th>
+    <th class="tg-0pky">Our Approach</th>
+  </tr>
+  <tr>
+    <td class="tg-0lax">Accuracy</td>
+    <td class="tg-0lax">68.37%</td>
+    <td class="tg-0lax">54.20%</td>
+    <td class="tg-0lax">34.27%</td>
+  </tr>
+</table>
+
+* Note that baseline is trained on 20 epochs and finetuned for 10 epochs, however our model is trained for 10 epochs and fine tuned for 2 epochs only due to limited computational resourses.
 ## Pre-requirements
-Pytorch >= 0.4.1 <br>
-tqdm
+**Python Version** >= 3.5
+**Pytorch Version** >= 1.2 <br>
+tqdm <br>
 
 ## Preprocessing
 (1) mkdir data && mkdir saved_models && mkdir vqa_models <br>
@@ -18,7 +40,6 @@ Our training process is splits into three stages. <br>
 ``CUDA_VISIBLE_DEVICES=0,1 python train_vqa_model.py --caption_dir None --learning_rate 0.0005 --joint_weight 1.0 --model_type hAttn`` <br>
 This command will save a vqa model under ``vqa_models`` folder. <br>
 Alternatively, you can also download pretrained model from here and put it under ``vqa_models`` folder by: <br>
-``wget -P vqa_models http://www.cs.utexas.edu/~jialinwu/dataset/vqa_model-best.pth``
 
 ### (2) training and extracting captions 
 ``CUDA_VISIBLE_DEVICES=0,1,2 python train_caption_model.py`` <br>
@@ -35,17 +56,7 @@ I extracts 8 set of captions using different epoch numbers. When I merging them,
 ### (3) training vqa models using generated captions 
 ``CUDA_VISIBLE_DEVICES=0,1 python finetune_vqa_model.py --caption_dir data/qid2caption --learning_rate 0.0005 --joint_weight 1.0 --model_type hAttn`` <br>
 
-I also release a final [vqa model](http://www.cs.utexas.edu/~jialinwu/dataset/vqa_model-best-final.pth) I trained using these codes.
+Our final model is located here. [vqa model](https://drive.google.com/file/d/1oU5SHcv-R_HMFZDFfkAErTrQO1Z1FWGc/view?usp=sharing) . Please note that unlike original model provided by author, our model is only trained on 10 epochs and the fine tuned for 2 epochs.
 
-## Citation
-If you happen to find this work helpful, please consider cite the paper 
-```@inproceedings{wu:acl19,
-title={Generating Question Relevant Captions to Aid Visual Question Answering},
-author={Jialin Wu and Zeyuan Hu and Raymond J. Mooney},
-booktitle={Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics (ACL)},
-month={August},
-address={Florence, Italy},
-url="http://www.cs.utexas.edu/users/ai-lab/pub-view.php?PubID=127759",
-year={2019}
-}
-
+## Reference
+## Base Code Taken from [here](https://github.com/jialinwu17/generate_captions_for_vqa)

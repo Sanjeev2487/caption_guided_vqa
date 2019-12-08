@@ -24,7 +24,7 @@ Results on VQA 2.0 (12/07/2019):
 
 * Note that baseline is trained on 20 epochs and finetuned for 10 epochs, however our model is trained for 10 epochs and fine tuned for 2 epochs only due to limited computational resourses.
 ## Pre-requirements
-**Python Version** >= 3.5
+**Python Version** >= 3.5 <br>
 **Pytorch Version** >= 1.2 <br>
 tqdm <br>
 
@@ -58,5 +58,4 @@ I extracts 8 set of captions using different epoch numbers. When I merging them,
 
 Our final model is located here. [vqa model](https://drive.google.com/file/d/1oU5SHcv-R_HMFZDFfkAErTrQO1Z1FWGc/view?usp=sharing) . Please note that unlike original model provided by author, our model is only trained on 10 epochs and the fine tuned for 2 epochs.
 
-## Reference
-## Base Code Taken from [here](https://github.com/jialinwu17/generate_captions_for_vqa)
+#### Base Code Taken from [here](https://github.com/jialinwu17/generate_captions_for_vqa)
